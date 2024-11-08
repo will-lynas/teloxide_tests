@@ -431,6 +431,29 @@ async fn test_echo() {
 }
 
 #[tokio::test]
+async fn test_update_dispatch() {
+    let mut bot = MockBot::new(Vec::<MockMessageText>::new(), get_schema());
+
+    bot.update(MockMessageText::new().text("/echo echo"));
+    bot.dispatch().await;
+
+    let last_response = bot.get_responses().sent_messages.pop().unwrap();
+
+    assert_eq!(last_response.text(), Some("/echo echo"));
+}
+
+#[tokio::test]
+async fn test_run() {
+    let mut bot = MockBot::new(Vec::<MockMessageText>::new(), get_schema());
+
+    bot.run(MockMessageText::new().text("/echo echo")).await;
+
+    let last_response = bot.get_responses().sent_messages.pop().unwrap();
+
+    assert_eq!(last_response.text(), Some("/echo echo"));
+}
+
+#[tokio::test]
 #[should_panic]
 async fn test_panic() {
     // Nothing else should fail because it panics
