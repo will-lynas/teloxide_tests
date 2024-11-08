@@ -286,6 +286,11 @@ impl MockBot {
         }
     }
 
+    pub async fn run<T: IntoUpdate>(&mut self, update: T) {
+        self.update(update);
+        self.dispatch().await;
+    }
+
     /// Actually dispatches the bot, calling the update through the handler tree.
     /// All the requests made through the bot will be stored in `responses`, and can be retrieved
     /// with `get_responses`. All the responses are unique to that dispatch, and will be erased for
