@@ -35,6 +35,13 @@ lazy_static! {
     static ref BOT_LOCK: Mutex<()> = Mutex::new(());
 }
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone)]
+struct DefaultKey(ChatId);
+
+fn default_distribution_function(update: &Update) -> Option<DefaultKey> {
+    return None;
+}
+
 fn find_file(value: Value) -> Option<FileMeta> {
     // Recursively searches for file meta
     let mut file_id = None;
@@ -260,6 +267,7 @@ impl MockBot {
         Dispatcher::builder(bot.clone(), handler_tree.clone())
             .dependencies(deps)
             .stack_size(stack_size)
+            .distribution_function(default_distribution_function)
             .build()
             .dispatch_with_listener(InsertingListener { updates }, LoggingErrorHandler::new())
             .await;
