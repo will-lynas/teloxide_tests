@@ -257,25 +257,12 @@ impl MockBot {
         let deps = self.dependencies.clone();
         let stack_size = self.stack_size;
 
-        tokio::task::spawn_blocking(move || {
-            let runtime = tokio::runtime::Builder::new_multi_thread()
-                .thread_stack_size(stack_size) // Not needed, but just in case
-                .enable_all()
-                .build()
-                .unwrap();
-            runtime.block_on(
-                Dispatcher::builder(bot.clone(), handler_tree.clone())
-                    .dependencies(deps)
-                    .stack_size(stack_size)
-                    .build()
-                    .dispatch_with_listener(
-                        InsertingListener { updates },
-                        LoggingErrorHandler::new(),
-                    ),
-            );
-        })
-        .await
-        .expect("Thread panicked");
+        Dispatcher::builder(bot.clone(), handler_tree.clone())
+            .dependencies(deps)
+            .stack_size(stack_size)
+            .build()
+            .dispatch_with_listener(InsertingListener { updates }, LoggingErrorHandler::new())
+            .await;
     }
 
     /// Actually dispatches the bot, calling the update through the handler tree.
