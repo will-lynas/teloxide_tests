@@ -526,6 +526,16 @@ impl MockBot {
     /// documentation example
     pub async fn get_state<S>(&self) -> S
     where
+        S: Send + Default + 'static + Clone,
+    {
+        self.try_get_state().await.unwrap_or(S::default())
+    }
+
+    /// Same as [`get_state`], but returns None if the state is None, instead of the default
+    ///
+    /// [`get_state`]: crate::MockBot::get_state
+    pub async fn try_get_state<S>(&self) -> Option<S>
+    where
         S: Send + 'static + Clone,
     {
         let (in_mem_storage, erased_storage) = self.get_potential_storages().await;
@@ -547,16 +557,16 @@ impl MockBot {
                 .clone()
                 .get_dialogue(chat_id)
                 .await
-                .expect("Error getting dialogue")
-                .expect("State is None")
+                .ok()
+                .flatten()
         } else if let Some(storage) = erased_storage {
             // If erased storage exists
             (*storage)
                 .clone()
                 .get_dialogue(chat_id)
                 .await
-                .expect("Error getting dialogue")
-                .expect("State is None")
+                .ok()
+                .flatten()
         } else {
             log::error!("No storage was detected! Did you add it to bot.dependencies(deps![get_bot_storage().await]); ?");
             panic!("No storage was detected!");
@@ -591,7 +601,7 @@ impl MockBot {
     /// PartialEq, Clone and Debug for the state like in `set_state` example
     pub async fn dispatch_and_check_last_text_and_state<S>(&self, text_or_caption: &str, state: S)
     where
-        S: Send + 'static + Clone + std::fmt::Debug + PartialEq,
+        S: Send + 'static + Clone + std::fmt::Debug + PartialEq + Default,
     {
         self.dispatch().await;
 
@@ -621,7 +631,7 @@ impl MockBot {
         text_or_caption: &str,
         state: S,
     ) where
-        S: Send + 'static + Clone,
+        S: Send + 'static + Clone + Default,
     {
         self.dispatch().await;
 
@@ -650,7 +660,7 @@ impl MockBot {
     /// Just checks the state after dispathing the update, like `dispatch_and_check_last_text_and_state`
     pub async fn dispatch_and_check_state<S>(&self, state: S)
     where
-        S: Send + 'static + Clone + std::fmt::Debug + PartialEq,
+        S: Send + 'static + Clone + std::fmt::Debug + PartialEq + Default,
     {
         self.dispatch().await;
         let got_state: S = self.get_state().await;
@@ -660,7 +670,7 @@ impl MockBot {
     /// Just checks the state discriminant after dispathing the update, like `dispatch_and_check_last_text_and_state_discriminant`
     pub async fn dispatch_and_check_state_discriminant<S>(&self, state: S)
     where
-        S: Send + 'static + Clone,
+        S: Send + 'static + Clone + Default,
     {
         self.dispatch().await;
         let got_state: S = self.get_state().await;
